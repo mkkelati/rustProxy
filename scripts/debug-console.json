@@ -1,0 +1,11 @@
+{
+  "name": "debug-console",
+  "description": "Inject debug console for web debugging",
+  "version": "1.0.0",
+  "author": "Rusty Proxy",
+  "target_domains": ["*"],
+  "inject_type": "JavaScript",
+  "script_content": "\nconsole.log('Rusty Proxy Debug Console Loaded');\nwindow.rustyProxy = {\n    version: '0.1.0',\n    debug: function(msg) {\n        console.log('[RUSTY-PROXY]', msg);\n    },\n    getInfo: function() {\n        return {\n            userAgent: navigator.userAgent,\n            url: window.location.href,\n            timestamp: new Date().toISOString()\n        };\n    }\n};\n",
+  "headers": {},
+  "enabled": false
+}

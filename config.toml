@@ -1,0 +1,26 @@
+[proxy]
+bind_address = "127.0.0.1"
+port = 8080
+upstream_timeout = 30
+max_connections = 1000
+buffer_size = 8192
+
+[scripts]
+directory = "scripts"
+enabled = true
+max_execution_time = 5000
+allowed_domains = ["*"]
+blocked_domains = []
+
+[logging]
+level = "info"
+file = "rusty-proxy.log"
+max_size = "10MB"
+max_files = 5
+
+[security]
+require_auth = false
+auth_token = ""
+rate_limit = 100
+whitelist_ips = []
+blacklist_ips = []
