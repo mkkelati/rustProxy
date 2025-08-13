@@ -21,10 +21,17 @@ A high-performance HTTP proxy script manager written in Rust for traffic injecti
 
 ### Installation
 
+#### Quick Installation (One-liner):
+```bash
+curl -sSL https://raw.githubusercontent.com/mkkelati/rustProxy/main/install.sh | sudo bash
+```
+
+#### Manual Installation:
+
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/rusty-proxy.git
-   cd rusty-proxy
+   git clone https://github.com/mkkelati/rustProxy.git
+   cd rustProxy
    ```
 
 2. **Run the installation script:**
@@ -181,20 +188,40 @@ rusty-proxy --port 9090 start
 rusty-proxy install
 ```
 
+### Interactive Management Menu
+
+After installation, you can access the interactive management interface:
+
+```bash
+# Launch interactive menu (easiest way)
+menu
+
+# Or use the full command
+rusty-proxy-menu
+```
+
+The interactive menu provides:
+- 🚀 Service start/stop/restart
+- 📊 Real-time status monitoring  
+- 📝 Configuration editing
+- 📜 Live log viewing
+- 🔧 Script management
+- 🧪 Proxy connection testing
+- 📚 Quick access to documentation
+- 🗑️ Easy uninstallation
+
 ### Management Commands (System Installation)
 
 ```bash
-# Start the service
-rusty-proxy-start
+# Interactive menu (recommended)
+menu
 
-# Stop the service
-rusty-proxy-stop
-
-# Check service status
-rusty-proxy-status
-
-# View logs in real-time
-rusty-proxy-logs
+# Individual commands
+rusty-proxy-start       # Start the service
+rusty-proxy-stop        # Stop the service
+rusty-proxy-status      # Check service status
+rusty-proxy-logs        # View logs in real-time
+rusty-proxy-menu        # Open full management interface
 ```
 
 ### Browser Configuration
@@ -222,8 +249,8 @@ export https_proxy=http://localhost:8080
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/rusty-proxy.git
-cd rusty-proxy
+git clone https://github.com/mkkelati/rustProxy.git
+cd rustProxy
 
 # Build in debug mode
 cargo build

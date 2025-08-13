@@ -153,7 +153,7 @@ create_service() {
     cat > /etc/systemd/system/$SERVICE_NAME.service << EOF
 [Unit]
 Description=Rusty Proxy HTTP Injector
-Documentation=https://github.com/yourusername/rusty-proxy
+Documentation=https://github.com/mkkelati/rustProxy
 After=network.target
 Wants=network-online.target
 
@@ -227,8 +227,167 @@ EOF
 journalctl -u $SERVICE_NAME -f
 EOF
 
+    # Interactive menu script
+    cat > /usr/local/bin/rusty-proxy-menu << EOF
+#!/bin/bash
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+show_banner() {
+    clear
+    echo -e "\${CYAN}"
+    echo "╔══════════════════════════════════════════════════════════╗"
+    echo "║                    🦀 RUSTY PROXY 🦀                    ║"
+    echo "║              HTTP Injector Script Manager               ║"
+    echo "║                      Version 0.1.0                      ║"
+    echo "╚══════════════════════════════════════════════════════════╝"
+    echo -e "\${NC}"
+    echo ""
+}
+
+show_status() {
+    echo -e "\${BLUE}━━━ SERVICE STATUS ━━━\${NC}"
+    if systemctl is-active --quiet $SERVICE_NAME; then
+        echo -e "\${GREEN}✓ Service Status: RUNNING\${NC}"
+    else
+        echo -e "\${RED}✗ Service Status: STOPPED\${NC}"
+    fi
+    
+    if systemctl is-enabled --quiet $SERVICE_NAME; then
+        echo -e "\${GREEN}✓ Auto-start: ENABLED\${NC}"
+    else
+        echo -e "\${YELLOW}⚠ Auto-start: DISABLED\${NC}"
+    fi
+    
+    echo -e "\${BLUE}Port: 8080\${NC}"
+    echo -e "\${BLUE}Config: $CONFIG_DIR/config.toml\${NC}"
+    echo -e "\${BLUE}Logs: $LOG_DIR/rusty-proxy.log\${NC}"
+    echo ""
+}
+
+show_menu() {
+    echo -e "\${PURPLE}━━━ MAIN MENU ━━━\${NC}"
+    echo -e "\${GREEN}1.\${NC} Start Service"
+    echo -e "\${GREEN}2.\${NC} Stop Service"
+    echo -e "\${GREEN}3.\${NC} Restart Service"
+    echo -e "\${GREEN}4.\${NC} View Service Status"
+    echo -e "\${GREEN}5.\${NC} View Live Logs"
+    echo -e "\${GREEN}6.\${NC} Edit Configuration"
+    echo -e "\${GREEN}7.\${NC} List Injection Scripts"
+    echo -e "\${GREEN}8.\${NC} Enable/Disable Scripts"
+    echo -e "\${GREEN}9.\${NC} Test Proxy Connection"
+    echo -e "\${GREEN}10.\${NC} View Documentation"
+    echo -e "\${GREEN}11.\${NC} Uninstall Rusty Proxy"
+    echo -e "\${RED}0.\${NC} Exit"
+    echo ""
+}
+
+handle_choice() {
+    case \$1 in
+        1)
+            echo -e "\${BLUE}Starting Rusty Proxy...\${NC}"
+            systemctl start $SERVICE_NAME
+            systemctl status $SERVICE_NAME --no-pager -l
+            ;;
+        2)
+            echo -e "\${BLUE}Stopping Rusty Proxy...\${NC}"
+            systemctl stop $SERVICE_NAME
+            echo -e "\${GREEN}Service stopped\${NC}"
+            ;;
+        3)
+            echo -e "\${BLUE}Restarting Rusty Proxy...\${NC}"
+            systemctl restart $SERVICE_NAME
+            systemctl status $SERVICE_NAME --no-pager -l
+            ;;
+        4)
+            systemctl status $SERVICE_NAME --no-pager -l
+            ;;
+        5)
+            echo -e "\${BLUE}Viewing live logs (Press Ctrl+C to exit)...\${NC}"
+            journalctl -u $SERVICE_NAME -f
+            ;;
+        6)
+            echo -e "\${BLUE}Opening configuration file...\${NC}"
+            \${EDITOR:-nano} $CONFIG_DIR/config.toml
+            echo -e "\${YELLOW}Restart service to apply changes\${NC}"
+            ;;
+        7)
+            echo -e "\${BLUE}Available injection scripts:\${NC}"
+            ls -la $INSTALL_DIR/scripts/
+            ;;
+        8)
+            echo -e "\${BLUE}Script management:\${NC}"
+            echo "Scripts are located in: $INSTALL_DIR/scripts/"
+            echo "Edit script files to enable/disable (set 'enabled': true/false)"
+            ;;
+        9)
+            echo -e "\${BLUE}Testing proxy connection...\${NC}"
+            if curl -x localhost:8080 -s -o /dev/null -w "%{http_code}" http://httpbin.org/ip | grep -q "200"; then
+                echo -e "\${GREEN}✓ Proxy is working correctly\${NC}"
+            else
+                echo -e "\${RED}✗ Proxy test failed\${NC}"
+            fi
+            ;;
+        10)
+            echo -e "\${BLUE}Opening documentation...\${NC}"
+            echo "Documentation: https://github.com/mkkelati/rustProxy"
+            echo "Local README: $INSTALL_DIR/README.md"
+            ;;
+        11)
+            echo -e "\${RED}Uninstalling Rusty Proxy...\${NC}"
+            read -p "Are you sure? (y/N): " confirm
+            if [[ \$confirm =~ ^[Yy]$ ]]; then
+                systemctl stop $SERVICE_NAME
+                systemctl disable $SERVICE_NAME
+                rm -f /etc/systemd/system/$SERVICE_NAME.service
+                rm -rf $INSTALL_DIR
+                rm -rf $CONFIG_DIR
+                rm -f /usr/local/bin/rusty-proxy*
+                echo -e "\${GREEN}Rusty Proxy uninstalled\${NC}"
+                exit 0
+            fi
+            ;;
+        0)
+            echo -e "\${CYAN}Thanks for using Rusty Proxy! 🦀\${NC}"
+            exit 0
+            ;;
+        *)
+            echo -e "\${RED}Invalid option. Please try again.\${NC}"
+            ;;
+    esac
+}
+
+# Main menu loop
+while true; do
+    show_banner
+    show_status
+    show_menu
+    read -p "Enter your choice [0-11]: " choice
+    echo ""
+    handle_choice \$choice
+    echo ""
+    read -p "Press Enter to continue..."
+done
+EOF
+
+    # Create alias for easy access
+    cat > /usr/local/bin/menu << EOF
+#!/bin/bash
+rusty-proxy-menu
+EOF
+
     chmod +x /usr/local/bin/rusty-proxy-*
+    chmod +x /usr/local/bin/menu
+    
     print_success "Management scripts created"
+    print_success "Interactive menu available via 'menu' or 'rusty-proxy-menu' command"
 }
 
 main() {
@@ -247,21 +406,30 @@ main() {
     
     print_success "Installation completed successfully!"
     echo
-    print_status "Next steps:"
-    echo "  1. Edit configuration: sudo nano $CONFIG_DIR/config.toml"
-    echo "  2. Start service: sudo systemctl start $SERVICE_NAME"
-    echo "  3. Enable auto-start: sudo systemctl enable $SERVICE_NAME"
-    echo "  4. Check status: sudo systemctl status $SERVICE_NAME"
-    echo "  5. View logs: sudo journalctl -u $SERVICE_NAME"
+    print_status "🎉 Rusty Proxy is now installed!"
     echo
-    print_status "Management commands:"
+    print_status "🚀 Quick start:"
+    echo "  1. Type 'menu' or 'rusty-proxy-menu' to open the interactive management interface"
+    echo "  2. Or start manually: sudo systemctl start $SERVICE_NAME"
+    echo "  3. Configure your browser to use proxy: localhost:8080"
+    echo
+    print_status "📋 Management commands:"
+    echo "  - menu: Interactive management interface"
+    echo "  - rusty-proxy-menu: Full interactive menu"
     echo "  - rusty-proxy-start: Start the service"
     echo "  - rusty-proxy-stop: Stop the service"
     echo "  - rusty-proxy-status: Check service status"
     echo "  - rusty-proxy-logs: View service logs"
     echo
-    print_status "The proxy will be available at http://localhost:8080"
+    print_status "📁 Important locations:"
+    echo "  - Config: $CONFIG_DIR/config.toml"
+    echo "  - Scripts: $INSTALL_DIR/scripts/"
+    echo "  - Logs: $LOG_DIR/rusty-proxy.log"
+    echo
+    print_status "🌐 The proxy will be available at http://localhost:8080"
     print_warning "Remember to configure your browser or applications to use this proxy!"
+    echo
+    print_status "🔧 To get started immediately, run: 'menu'"
 }
 
 # Run main function
